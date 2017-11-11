@@ -39,7 +39,6 @@ is_l10n = False
 def tagrepl(m):
     global vector
     global is_l10n
-    print(m.groups())
     vector = 0
 
     is_l10n = False

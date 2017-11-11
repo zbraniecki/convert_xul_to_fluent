@@ -3,25 +3,29 @@ import json
 # from lxml import etree
 
 from lib.xul import collect_messages
-from lib.dtd import get_dtd
+from lib.dtd import get_dtds
+from lib.utils import read_file, write_file
+from lib.migration import build_migration
 
-f = '../mozilla-unified/browser/components/preferences/in-content/search.xul'
-d = '../mozilla-unified/browser/locales/en-US/chrome/browser/preferences/search.dtd'
+pane = 'search'
 
+data = {
+    'bug_id': '1411012',
+    'description': 'Migrate several strings from Preferences:Privacy',
+    'mozilla-central': '../mozilla-unified',
+    'xul': 'browser/components/preferences/in-content/{0}.xul'.format(pane),
+    'dtd': [
+        'browser/locales/en-US/chrome/browser/preferences/{0}.dtd'.format(pane)
+    ],
+    'migration': './migration.py',
+    'ftl': 'browser/locales/en-US/browser/preferences/{0}.ftl'.format(pane),
+}
 
-def read_file(path):
-    with open(path) as fptr:
-        return fptr.read()
-
-
-def write_file(path, text):
-    with open(path, "w") as text_file:
-        text_file.write(text)
 
 if __name__ == '__main__':
-    dtd = get_dtd(read_file(d))
+    dtds = get_dtds(data['dtd'], data['mozilla-central'])
 
-    s = read_file(f)
+    s = read_file(data['xul'], data['mozilla-central'])
 
     print('======== INPUT ========')
     print(s)
@@ -29,9 +33,14 @@ if __name__ == '__main__':
     print('======== OUTPUT ========')
     (new_xul, messages) = collect_messages(s)
     print(new_xul)
-    write_file(f, new_xul)
+    write_file(data['xul'], new_xul, data['mozilla-central'])
 
     print('======== L10N ========')
 
     print(json.dumps(messages, sort_keys=True, indent=2))
+
+    migration = build_migration(messages, dtds, data)
+
+    print('======== MIGRATION ========')
+    print(migration)
 
