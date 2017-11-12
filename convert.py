@@ -1,6 +1,4 @@
 import json
-# from io import StringIO
-# from lxml import etree
 
 from lib.xul import collect_messages
 from lib.dtd import get_dtds
@@ -43,4 +41,3 @@ if __name__ == '__main__':
 
     print('======== MIGRATION ========')
     print(migration)
-
