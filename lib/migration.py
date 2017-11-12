@@ -3,6 +3,10 @@ def to_chrome_path(path):
     return path
 
 
+def get_dtd_path(name, dtds):
+    return dtds[name[1:-1]]['file']
+
+
 def get_entity_name(s):
     return s[1:-1]
 
@@ -29,10 +33,13 @@ def build_migration(messages, dtds, data):
         data['bug_id'], data['description'])
     res += '\n\ndef migrate(ctx):\n    """{0}"""\n\n'.format(desc)
 
+    dtd_paths = ',\n{0}'.format(ind(2)).join(
+        map(lambda x: '\'{0}\''.format(to_chrome_path(x)), data['dtd'])
+    )
     res += ind(1) + \
-        'ctx.maybe_add_localization(\n{0}\'{1}\')\n\n'.format(
+        'ctx.maybe_add_localization(\n{0}{1})\n\n'.format(
             ind(2),
-            to_chrome_path(data['dtd'][0]))
+            dtd_paths)
 
     res += ind(1) + 'ctx.add_transforms(\n'
     res += ind(2) + '{0},\n'.format(to_chrome_path(data['ftl']))
@@ -43,14 +50,14 @@ def build_migration(messages, dtds, data):
         res += ind(3) + 'FTL.Message(\n'
         res += ind(4) + 'id=FTL.Identifier(\'{0}\'),\n'.format(l10n_id)
         if msg['value']:
-            res += add_copy(data['dtd'][0], msg['value'], 4, 'value=')
+            res += add_copy(get_dtd_path(msg['value'], dtds), msg['value'], 4, 'value=')
         if msg['attrs']:
             res += ind(4) + 'attributes=[\n'
             for name in msg['attrs']:
                 attr = msg['attrs'][name]
                 res += ind(5) + 'FTL.Attribute(\n'
                 res += ind(6) + 'FTL.Identifier(\'{0}\'),\n'.format(name)
-                res += add_copy(data['dtd'][0], attr, 6)
+                res += add_copy(get_dtd_path(attr, dtds), attr, 6)
                 res += ind(5) + '),\n'
             res += ind(4) + '],\n'
         res += ind(3) + '),\n'
