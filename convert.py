@@ -6,19 +6,24 @@ from lib.utils import read_file, write_file
 from lib.migration import build_migration
 from lib.fluent import build_ftl
 
-pane = 'search'
+dry_run = False
+
+pane = 'containers'
 
 data = {
-    'bug_id': '1411012',
-    'description': 'Migrate several strings from Preferences:Search',
+    'bug_id': '1419547',
+    'description': 'Migrate several strings from Preferences:Containers',
     'mozilla-central': '../mozilla-unified',
-    'xul': 'browser/components/preferences/in-content/{0}.xul'.format(pane),
+    'xul': 'browser/base/content/browser-menubar.inc',
     'dtd': [
-        'browser/locales/en-US/chrome/browser/preferences/{0}.dtd'.format(pane),
-        'browser/locales/en-US/chrome/browser/preferences/preferences.dtd'
+    	'browser/locales/en-US/chrome/browser/browser.dtd',
+        'toolkit/locales/en-US/chrome/global/charsetMenu.dtd',
+        'browser/locales/en-US/chrome/browser/baseMenuOverlay.dtd',
+        'browser/locales/en-US/chrome/browser/safebrowsing/phishing-afterload-warning-message.dtd',
+        'browser/locales/en-US/chrome/browser/safebrowsing/report-phishing.dtd',
     ],
     'migration': './migration.py',
-    'ftl': 'browser/locales/en-US/browser/preferences/{0}.ftl'.format(pane),
+    'ftl': 'browser/locales/en-US/browser/menubar.ftl'
 }
 
 
@@ -33,7 +38,8 @@ if __name__ == '__main__':
     print('======== OUTPUT ========')
     (new_xul, messages) = collect_messages(s)
     print(new_xul)
-    # write_file(data['xul'], new_xul, data['mozilla-central'])
+    if not dry_run:
+        write_file(data['xul'], new_xul, data['mozilla-central'])
 
     print('======== L10N ========')
 
@@ -48,3 +54,5 @@ if __name__ == '__main__':
 
     print('======== Fluent ========')
     print(ftl)
+    if not dry_run:
+        write_file(data['ftl'], ftl, data['mozilla-central'])

@@ -33,14 +33,11 @@ def build_migration(messages, dtds, data):
         data['bug_id'], data['description'])
     res += '\n\ndef migrate(ctx):\n    """{0}"""\n\n'.format(desc)
 
-    dtd_paths = ',\n{0}'.format(ind(2)).join(
-        map(lambda x: '\'{0}\''.format(to_chrome_path(x)), data['dtd'])
-    )
-    res += ind(1) + \
-        'ctx.maybe_add_localization(\n{0}{1})\n\n'.format(
-            ind(2),
-            dtd_paths)
+    for dtd_path in data['dtd']:
+        res += "{0}ctx.maybe_add_localization('{1}')\n".format(
+            ind(1), to_chrome_path(dtd_path))
 
+    res += '\n'
     res += ind(1) + 'ctx.add_transforms(\n'
     res += ind(2) + '{0},\n'.format(to_chrome_path(data['ftl']))
     res += ind(2) + '{0},\n'.format(data['ftl'])
