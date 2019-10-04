@@ -1,7 +1,8 @@
 class Migration:
-    def __init__(self, bug_id=None, mc_path=None):
+    def __init__(self, bug_id=None, mc_path=None, description=None):
         self.bug_id = bug_id
         self.mc_path = mc_path
+        self.description = description
         self.helpers = []
         self.migrate_ops = []
 
@@ -60,14 +61,14 @@ class Migration:
         if self.migrate_ops:
             res += f"from fluent.migrate import {', '.join(self.migrate_ops)}\n"
 
-        desc = "Migrate FOO from dtd to FTL, part {index}"
+        desc_postfix = ", part {index}"
 
         from_paths = []
         for name in shared_paths:
             from_paths.append(f'{name}="{shared_paths[name]}"')
 
         res += (f'\ndef migrate(ctx):\n'
-                f'    """Bug {self.bug_id} - {desc}"""\n\n'
+                f'    """Bug {self.bug_id} - {self.description}{desc_postfix}"""\n\n'
                 f'    ctx.add_transforms(\n'
                 f'        "browser/browser/browser.ftl",\n'
                 f'        "browser/browser/browser.ftl",\n'

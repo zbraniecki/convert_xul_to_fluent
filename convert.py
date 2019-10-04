@@ -84,7 +84,7 @@ def init_migrator(parser):
             follow_includes = input(f'Follow includes? ({"Y" if candidate.includes else "N"}): ')
             i += 1
 
-    migrator = Migrator(bug_id, mc)
+    migrator = Migrator(bug_id, mc, args.description)
     for entry in dom_entries:
         migrator.add_dom_entry(entry)
 
@@ -104,8 +104,9 @@ if __name__ == '__main__':
                         action='store_true',
                         help='Turn on an interactive mode.')
     parser.add_argument('--bug_id',
-                        required=False,
                         help='Bugzilla ID of the issue.')
+    parser.add_argument('--description',
+                        help='Migration description.')
     parser.add_argument('--mc',
                         required=False,
                         default="./",

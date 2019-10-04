@@ -1,8 +1,13 @@
 import os
+import re
 from dom import DOMFragment, DOMDiff, ElementDiff
 from dtd import DTDFragment, DTDDiff
 from ftl import FTLFragment, FTLDiff, FTLMessage
 from migration import Migration
+
+def camel_to_snake(text):
+        str1 = re.sub('(.)([A-Z][a-z]+)', r'\1-\2', text)
+        return re.sub('([a-z0-9])([A-Z])', r'\1-\2', str1).lower()
 
 class Entry:
     def __init__(self, path, line_start=0, line_end=None, includes=None):
@@ -25,9 +30,10 @@ class Entry:
             out.write("".join(result))
 
 class Migrator:
-    def __init__(self, bug_id, mc_path):
+    def __init__(self, bug_id, mc_path, description):
         self.bug_id = bug_id
         self.mc_path = mc_path
+        self.description = description
 
         self.dom_fragments = []
         self.dtd_fragments = []
@@ -60,6 +66,8 @@ class Migrator:
         if result["name"].endswith(f".{attr.name}"):
             message_id_candidate = result["name"][:(len(attr.name) + 1) * -1]
             result["name"] = result["name"][len(message_id_candidate) + 1:]
+
+            message_id_candidate = camel_to_snake(message_id_candidate)
             if message["id"] is None:
                 message["id"] = message_id_candidate
             elif message["id"] != message_id_candidate:
@@ -114,7 +122,7 @@ class Migrator:
             if candidate is None:
                 print(f"Failed to find an entity {attr['entity_id']}")
 
-        migration = Migration(self.bug_id, self.mc_path)
+        migration = Migration(self.bug_id, self.mc_path, self.description)
 
         ftl = self.ftl_fragments[0]
         ftl_diff = FTLDiff()
