@@ -24,6 +24,7 @@ class Migration:
         return result
 
     def get_path_alias(self, path, shared_paths):
+        path = path.replace("locales/en-US/", "")
         for name in shared_paths:
             if shared_paths[name] == path:
                 return name
@@ -46,7 +47,7 @@ class Migration:
                     path = self.relative_path(attr["dtd"].entry.path)
                     name = self.get_path_alias(path, shared_paths)
                     
-                    body += f'    .{attr["name"]} = COPY({name}, "{attr["entity_id"]}")\n'
+                    body += f'    .{attr["name"]} = {{ COPY({name}, "{attr["entity_id"]}") }}\n'
                 else:
                     raise NotImplementedError
 
