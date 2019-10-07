@@ -5,6 +5,21 @@ from dtd import DTDFragment, DTDDiff
 from ftl import FTLFragment, FTLDiff, FTLMessage
 from migration import Migration
 
+attribute_map = {
+  "tooltiptext": "tooltip",
+  "value": "label"
+}
+
+def get_attr_ending(attr_name, id):
+    if id.endswith(f".{attr_name}"):
+        return attr_name
+
+    if attr_name in attribute_map:
+        ending = attribute_map[attr_name]
+        if id.endswith(f".{ending}"):
+            return ending
+    return None
+
 def camel_to_snake(text):
         str1 = re.sub('(.)([A-Z][a-z]+)', r'\1-\2', text)
         return re.sub('([a-z0-9])([A-Z])', r'\1-\2', str1).lower()
@@ -63,8 +78,9 @@ class Migrator:
         }
         result["name"] = result["entity_id"]
 
-        if result["name"].endswith(f".{attr.name}"):
-            message_id_candidate = result["name"][:(len(attr.name) + 1) * -1]
+        ending = get_attr_ending(attr.name, result["name"])
+        if ending is not None:
+            message_id_candidate = result["name"][:(len(ending) + 1) * -1]
             result["name"] = result["name"][len(message_id_candidate) + 1:]
 
             message_id_candidate = camel_to_snake(message_id_candidate)

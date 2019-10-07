@@ -39,7 +39,7 @@ class Migration:
         shared_paths = {}
 
         for message in self.messages:
-            body += f'{message["id"]} = \n'
+            body += f'{message["id"]} =\n'
             for attr in message["attributes"]:
                 if attr["action"] == "copy":
                     if "COPY" not in self.helpers:
@@ -74,7 +74,7 @@ class Migration:
                 f'        "browser/browser/browser.ftl",\n'
                 f'        "browser/browser/browser.ftl",\n'
                 f'        transforms_from(\n'
-                f'"""\n'
+                f'            """\n\n'
                 f'{body}'
                 f'""", {", ".join(from_paths)}))\n')
 

@@ -24,8 +24,9 @@ class DTDDiff:
                 if start > 0 and source[start - 1] == "\n":
                     start -= 1
                 source = source[:start] + source[end:]
-                self.fragment.entities.remove(change[1])
-                self.recalculate_spans(end, (end - start) * -1)
+                if change[1] in self.fragment.entities:
+                    self.fragment.entities.remove(change[1])
+                    self.recalculate_spans(end, (end - start) * -1)
             else:
                 raise NotImplementedError
         return source
