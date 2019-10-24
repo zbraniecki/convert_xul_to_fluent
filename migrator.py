@@ -81,9 +81,10 @@ class Migrator:
         ending = get_attr_ending(attr.name, result["name"])
         if ending is not None:
             message_id_candidate = result["name"][:(len(ending) + 1) * -1]
+            result["old_name"] = attr.name
             result["name"] = result["name"][len(message_id_candidate) + 1:]
 
-            message_id_candidate = camel_to_snake(message_id_candidate)
+            message_id_candidate = camel_to_snake(message_id_candidate).replace(".", "-")
             if message["id"] is None:
                 message["id"] = message_id_candidate
             elif message["id"] != message_id_candidate:
@@ -109,10 +110,18 @@ class Migrator:
                 if attr.is_dtd_attr():
                     migration_attr = self.calculate_attr_name(message, element, attr)
                     message["attributes"].append(migration_attr)
-                    attrs_to_remove.append(migration_attr["name"])
+                    attrs_to_remove.append(migration_attr["old_name"])
             
+            replace_attr = None
+
+            if "label" in attrs_to_remove:
+                replace_attr = "label"
+            elif len(attrs_to_remove)  ==  1:
+                replace_attr = attrs_to_remove[0]
+            else:
+                raise Error("Don't know how to pick an attribute to replace!")
             for attr_name in attrs_to_remove:
-                if attr_name == "label":
+                if attr_name == replace_attr:
                     elem_diff.add_change("replace", attr_name, "data-l10n-id", message["id"])
                 else:
                     elem_diff.add_change("remove", attr_name)
