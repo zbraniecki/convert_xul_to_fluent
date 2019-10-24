@@ -152,7 +152,6 @@ class DOMFragment:
 
     def find_all_elements(self):
         elements = []
-        print(self.source)
         matches = re.finditer("<(?P<id>\w+)\s*(?P<attrs>(?:[\w-]+\s*=\s*\"[^\"]*\"\s*)*)/>", self.source)
         elements.extend(matches)
 

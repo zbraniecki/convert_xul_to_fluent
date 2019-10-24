@@ -81,8 +81,7 @@ class Migrator:
         ending = get_attr_ending(attr.name, result["name"])
         if ending is not None:
             message_id_candidate = result["name"][:(len(ending) + 1) * -1]
-            result["old_name"] = attr.name
-            result["name"] = result["name"][len(message_id_candidate) + 1:]
+            result["name"] = attr.name
 
             message_id_candidate = camel_to_snake(message_id_candidate).replace(".", "-")
             if message["id"] is None:
@@ -110,7 +109,7 @@ class Migrator:
                 if attr.is_dtd_attr():
                     migration_attr = self.calculate_attr_name(message, element, attr)
                     message["attributes"].append(migration_attr)
-                    attrs_to_remove.append(migration_attr["old_name"])
+                    attrs_to_remove.append(migration_attr["name"])
             
             replace_attr = None
 
