@@ -20,7 +20,7 @@ class ElementDiff:
         self.changes = []
         self.element = element
 
-    def add_change(self, action, attr_name, new_value=None, new_value2=None):
+    def add_change(self, action, attr_name=None, new_value=None, new_value2=None):
         self.changes.append((action, attr_name, new_value, new_value2))
 
     def recalculate_spans(self, start, change):
@@ -30,6 +30,8 @@ class ElementDiff:
                     attr.span = (attr.span[0] + change, attr.span[1] + change)
             if element.span[0] >= start:
                 element.span = (element.span[0] + change, element.span[1] + change)
+            if element.value is not None and element.value["span"][0] >= start:
+                element.value["span"] = (element.value["span"][0] + change, element.value["span"][1] + change)
 
     def select_cut(self, source, start, end):
         ws_end = start
@@ -85,6 +87,11 @@ class ElementDiff:
                         self.element.attrs.insert(idx, new_attr)
                         self.element.attrs.remove(attr)
                         self.recalculate_spans(attr.span[1], (new_attr.span[1] - new_attr.span[0]) - (attr.span[1] - attr.span[0]))
+            elif change[0] == "remove_value":
+                span = self.element.value["span"]
+                source = source[:span[0]] + source[span[1]:]
+                self.recalculate_spans(span[1], (span[1] - span[0]) * -1)
+
             else:
                 raise NotImplementedError
         return source
@@ -112,7 +119,7 @@ class DOMElement:
         self.span = span
 
     def is_dtd_element(self):
-        if self.value and self.value.startswith("&") and self.value.endswith(";"):
+        if self.value and self.value["value"].startswith("&") and self.value["value"].endswith(";"):
             return True
 
         for attr in self.attrs:
@@ -162,11 +169,12 @@ class DOMFragment:
         for match in elements:
             attrs = self.parse_attributes(match.group("attrs"), match.span("attrs"), match.span(0))
             value = match.group("value") if "value" in match.groupdict() else None
+            value_span = match.span("value") if "value" in match.groupdict() else None
             elem = DOMElement(
                     self,
                     match.group("id"),
                     attrs,
-                    value,
+                    {"value": value, "span": value_span} if value is not None else None,
                     match.span(0))
             result.append(elem)
         return result

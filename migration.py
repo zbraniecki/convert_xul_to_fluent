@@ -39,7 +39,19 @@ class Migration:
         shared_paths = {}
 
         for message in self.messages:
-            body += f'{message["id"]} =\n'
+            body += f'{message["id"]} ='
+            if message["value"] is not None:
+                value = message["value"]
+                if value["action"] == "copy":
+                    if "COPY" not in self.helpers:
+                        self.helpers.append("COPY")
+                    path = self.relative_path(value["dtd"].entry.path)
+                    name = self.get_path_alias(path, shared_paths)
+
+                    body += f' {{ COPY({name}, "{value["entity_id"]}") }}\n'
+                else:
+                    raise NotImplementedError
+            body += '\n'
             for attr in message["attributes"]:
                 if attr["action"] == "copy":
                     if "COPY" not in self.helpers:

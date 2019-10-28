@@ -21,7 +21,10 @@ class FTLDiff:
 
 class FTLMessage(Message):
     def __init__(self, id, value=None, attributes=None):
-        v = Pattern([TextElement(value)]) if value is not None else None
+        v = None
+        if value is not None:
+            v = Pattern([TextElement(value["entity"].value)])
+
         attrs = []
 
         if attributes:

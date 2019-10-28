@@ -105,6 +105,10 @@ class Migrator:
             diff = DOMDiff()
             elem_diff = ElementDiff(element)
             attrs_to_remove = []
+            if element.value is not None:
+                message["id"] = camel_to_snake(element.value["value"][1:-1]).replace(".", "-")
+                elem_diff.add_change("remove_value")
+                message["value"] = {"entity_id": element.value["value"][1:-1] }
             for attr in element.attrs:
                 if attr.is_dtd_attr():
                     migration_attr = self.calculate_attr_name(message, element, attr)
@@ -117,18 +121,40 @@ class Migrator:
                 replace_attr = "label"
             elif len(attrs_to_remove)  ==  1:
                 replace_attr = attrs_to_remove[0]
-            else:
-                raise Error("Don't know how to pick an attribute to replace!")
+            elif len(attrs_to_remove) != 0:
+                raise Exception("Don't know how to pick an attribute to replace!")
+
             for attr_name in attrs_to_remove:
                 if attr_name == replace_attr:
                     elem_diff.add_change("replace", attr_name, "data-l10n-id", message["id"])
                 else:
                     elem_diff.add_change("remove", attr_name)
+
+            if replace_attr is None:
+                    elem_diff.add_change("insert", "data-l10n-id", message["id"])
+
             messages.append(message)
             diff.add_change("modify", elem_diff)
             element.fragment.diffs.append(diff)
 
         for message in messages:
+            if message["value"]:
+                candidate = None
+                for dtd in self.dtd_fragments:
+                    candidate = dtd.find_entity(message["value"]["entity_id"])
+                    if candidate:
+                        message["value"]["action"] = "copy"
+                        message["value"]["dtd"] = dtd
+                        message["value"]["entity"] = candidate
+
+                        dtd_diff = DTDDiff(dtd)
+                        dtd_diff.add_change("remove", candidate)
+                        dtd.diffs.append(dtd_diff)
+                        break
+
+                if candidate is None:
+                    print(f"Failed to find an entity {attr['entity_id']}")
+
             for attr in message["attributes"]:
                 candidate = None
                 for dtd in self.dtd_fragments:
@@ -143,8 +169,8 @@ class Migrator:
                         dtd.diffs.append(dtd_diff)
                         break
 
-            if candidate is None:
-                print(f"Failed to find an entity {attr['entity_id']}")
+                if candidate is None:
+                    print(f"Failed to find an entity {attr['entity_id']}")
 
         migration = Migration(self.bug_id, self.mc_path, self.description)
 
