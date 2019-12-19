@@ -25,11 +25,12 @@ def camel_to_snake(text):
         return re.sub('([a-z0-9])([A-Z])', r'\1-\2', str1).lower()
 
 class Entry:
-    def __init__(self, path, line_start=0, line_end=None, includes=None):
+    def __init__(self, path, line_start=0, line_end=None, includes=None, dry_run=False):
         self.path = path
         self.line_start = line_start
         self.line_end = line_end
         self.includes = includes
+        self.dry_run = dry_run
 
     def load_source(self):
         lines = open(self.path).readlines()
@@ -41,8 +42,9 @@ class Entry:
             result = lines[:self.line_start] + [new_chunk] + lines[self.line_end:]
         else:
             result = [new_chunk]
-        with open(self.path, 'w') as out:
-            out.write("".join(result))
+        if not self.dry_run:
+            with open(self.path, 'w') as out:
+                out.write("".join(result))
 
 class Migrator:
     def __init__(self, bug_id, mc_path, description):

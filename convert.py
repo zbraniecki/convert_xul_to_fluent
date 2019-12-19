@@ -8,7 +8,7 @@ from dtd import DTDFragment, DTDDiff
 def file_lines(path):
     return len(open(path).readlines())
 
-def parse_path(mc_path, input):
+def parse_path(mc_path, input, dry_run):
     entry = {
         "path": None,
         "line_start": 0,
@@ -36,12 +36,13 @@ def parse_path(mc_path, input):
     
     if len(chunks) > 3:
         entry["includes"] = chunks[3]
-    return Entry(entry["path"], entry["line_start"], entry["line_end"], entry["includes"])
+    return Entry(entry["path"], entry["line_start"], entry["line_end"], entry["includes"], dry_run)
 
 def init_migrator(parser):
     args = parser.parse_args()
     bug_id = args.bug_id
     mc = args.mc
+    dry_run = args.dry_run
 
     dom_entries = []
     dtd_entries = []
@@ -49,17 +50,17 @@ def init_migrator(parser):
 
     if args.dom:
         for path in args.dom:
-            entry = parse_path(mc, path)
+            entry = parse_path(mc, path, dry_run)
             dom_entries.append(entry)
 
     if args.dtd:
         for path in args.dtd:
-            entry = parse_path(mc, path)
+            entry = parse_path(mc, path, dry_run)
             dtd_entries.append(entry)
 
     if args.ftl:
         for path in args.ftl:
-            entry = parse_path(mc, path)
+            entry = parse_path(mc, path, dry_run)
             ftl_entries.append(entry)
 
     if args.interactive:
@@ -123,6 +124,10 @@ if __name__ == '__main__':
     parser.add_argument('--js', action='append',
                         required=False,
                         help='Path to a JS file to be converted.')
+    parser.add_argument('--dry-run',
+                        required=False,
+                        action='store_true',
+                        help='Turn on dry run.')
 
     migrator = init_migrator(parser)
 
