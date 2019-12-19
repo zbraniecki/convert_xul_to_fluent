@@ -98,7 +98,7 @@ class Migrator:
             diff = DOMDiff()
             elem_diff = ElementDiff(element)
             attrs_to_remove = []
-            if element.value is not None:
+            if element.value is not None and element.value["value"].strip().startswith('&'):
                 message["id"] = convert_id(element.value["value"][1:-1], message_ids)
                 elem_diff.add_change("remove_value")
                 message["value"] = {"entity_id": element.value["value"][1:-1] }
