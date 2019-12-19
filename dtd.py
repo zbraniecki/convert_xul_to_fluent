@@ -8,6 +8,9 @@ class DTDDiff:
     def add_change(self, action, entity):
         self.changes.append((action, entity))
 
+    def is_scheduled(self, action, entity):
+        return (action, entity) in self.changes
+
     def recalculate_spans(self, start, change):
         for entity in self.fragment.entities:
             if entity.span[1] <= start:

@@ -142,40 +142,33 @@ class Migrator:
             diff.add_change("modify", elem_diff)
             element.fragment.diffs.append(diff)
 
-        for message in messages:
-            if message["value"]:
-                candidate = None
-                for dtd in self.dtd_fragments:
+        for dtd in self.dtd_fragments:
+            dtd_diff = DTDDiff(dtd)
+            dtd.diffs.append(dtd_diff)
+            for message in messages:
+                if message["value"]:
                     candidate = dtd.find_entity(message["value"]["entity_id"])
                     if candidate:
                         message["value"]["action"] = "copy"
                         message["value"]["dtd"] = dtd
                         message["value"]["entity"] = candidate
 
-                        dtd_diff = DTDDiff(dtd)
-                        dtd_diff.add_change("remove", candidate)
-                        dtd.diffs.append(dtd_diff)
-                        break
+                        if not dtd_diff.is_scheduled("remove", candidate):
+                            dtd_diff.add_change("remove", candidate)
+                    else:
+                        print(f"Failed to find an entity {attr['entity_id']}")
 
-                if candidate is None:
-                    print(f"Failed to find an entity {attr['entity_id']}")
-
-            for attr in message["attributes"]:
-                candidate = None
-                for dtd in self.dtd_fragments:
+                for attr in message["attributes"]:
                     candidate = dtd.find_entity(attr["entity_id"])
                     if candidate:
                         attr["action"] = "copy"
                         attr["dtd"] = dtd
                         attr["entity"] = candidate
 
-                        dtd_diff = DTDDiff(dtd)
-                        dtd_diff.add_change("remove", candidate)
-                        dtd.diffs.append(dtd_diff)
-                        break
-
-                if candidate is None:
-                    print(f"Failed to find an entity {attr['entity_id']}")
+                        if not dtd_diff.is_scheduled("remove", candidate):
+                            dtd_diff.add_change("remove", candidate)
+                    else:
+                        print(f"Failed to find an entity {attr['entity_id']}")
 
         migration = Migration(self.bug_id, self.mc_path, self.description)
 
