@@ -10,19 +10,27 @@ attribute_map = {
   "value": "label"
 }
 
-def get_attr_ending(attr_name, id):
+def split_attr(id, attr_name):
     if id.endswith(f".{attr_name}"):
-        return attr_name
+        return (id[:(len(attr_name) + 1) * -1], attr_name)
 
     if attr_name in attribute_map:
         ending = attribute_map[attr_name]
         if id.endswith(f".{ending}"):
-            return ending
-    return None
+            return (id[:(len(ending) + 1) * -1], ending)
+    return (id, attr_name)
 
 def camel_to_snake(text):
         str1 = re.sub('(.)([A-Z][a-z]+)', r'\1-\2', text)
         return re.sub('([a-z0-9])([A-Z])', r'\1-\2', str1).lower()
+
+def convert_id(text, message_ids):
+    result = camel_to_snake(text).replace(".", "-")
+    if result[-1].isnumeric():
+        candidate = result[:-1]
+        if candidate not in message_ids:
+            result = result[:-1]
+    return result
 
 class Entry:
     def __init__(self, path, line_start=0, line_end=None, includes=None, dry_run=False):
@@ -71,33 +79,16 @@ class Migrator:
         df = FTLFragment(source, entry)
         self.ftl_fragments.append(df)
 
-    def calculate_attr_name(self, message, element, attr):
-        result = {
-            "name": None,
-            "action": None,
-            "entity_id": attr.value[1:-1],
-            "element": element
-        }
-        result["name"] = result["entity_id"]
-
-        ending = get_attr_ending(attr.name, result["name"])
-        if ending is not None:
-            message_id_candidate = result["name"][:(len(ending) + 1) * -1]
-            result["name"] = attr.name
-
-            message_id_candidate = camel_to_snake(message_id_candidate).replace(".", "-")
-            if message["id"] is None:
-                message["id"] = message_id_candidate
-            elif message["id"] != message_id_candidate:
-                raise "We need to resolve id conflict!"
-        return result
-
     def migrate(self):
         elements = []
         for fragment in self.dom_fragments:
             elements.extend(fragment.find_dtd_elements())
 
         messages = []
+
+        # We need to keep track of ids so that we can strip
+        # trailing numbers if it won't duplicate ID
+        message_ids = []
         for element in elements:
             message = {
                 "id": None,
@@ -108,12 +99,23 @@ class Migrator:
             elem_diff = ElementDiff(element)
             attrs_to_remove = []
             if element.value is not None:
-                message["id"] = camel_to_snake(element.value["value"][1:-1]).replace(".", "-")
+                message["id"] = convert_id(element.value["value"][1:-1], message_ids)
                 elem_diff.add_change("remove_value")
                 message["value"] = {"entity_id": element.value["value"][1:-1] }
             for attr in element.attrs:
                 if attr.is_dtd_attr():
-                    migration_attr = self.calculate_attr_name(message, element, attr)
+                    migration_attr = {
+                        "name": attr.name,
+                        "action": None,
+                        "entity_id": attr.value[1:-1],
+                        "element": element
+                    }
+                    (new_id, attr_name) = split_attr(attr.value[1:-1], attr.name)
+                    new_id = convert_id(new_id, message_ids)
+                    if message["id"] is None:
+                        message["id"] = new_id
+                    elif message["id"] != new_id:
+                        raise "We need to resolve id conflict!"
                     message["attributes"].append(migration_attr)
                     attrs_to_remove.append(migration_attr["name"])
             
@@ -135,6 +137,7 @@ class Migrator:
             if replace_attr is None:
                     elem_diff.add_change("insert", "data-l10n-id", message["id"])
 
+            message_ids.append(message["id"])
             messages.append(message)
             diff.add_change("modify", elem_diff)
             element.fragment.diffs.append(diff)
